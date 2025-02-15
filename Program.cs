@@ -23,6 +23,17 @@ builder.Services.AddScoped<IUserRepository, UserService>();
 builder.Services.AddScoped<IProductRepository, ProductService>();
 builder.Services.AddScoped<ICartRepository, CartService>();
 
+// Cors
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AllowAll", builder =>
+    {
+        builder.AllowAnyOrigin()
+               .AllowAnyMethod()
+               .AllowAnyHeader();
+    });
+});
+
 builder.Services.AddAuthentication(options =>
 {
     options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
