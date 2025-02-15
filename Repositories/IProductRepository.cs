@@ -8,5 +8,8 @@ namespace ProjectJWTeCommerce.Repositories
         List<Product> AddProduct(int sellerId,Product product);
         Product UpdateProduct(int sellerId,int productId,Product product);
         void DeleteProduct(int sellerId,int productId);
+        List<Product> GetProductsOfSeller(int sellerId);
+        Product GetProduct(int productId);
+        List<Product> GetAllProducts();
     }
 }

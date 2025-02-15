@@ -43,5 +43,29 @@ namespace ProjectJWTeCommerce.Controllers
 
             return Ok();
         }
+
+        [HttpGet]
+        [Route("get-cart/{userId}")]
+        public IActionResult GetCart(int userId)
+        {
+            if (userId == 0)
+                return BadRequest();
+            var result = _cartRepository.GetCart(userId);
+            if (result == null)
+                return BadRequest("Something went wrong with the query");
+            return Ok(result);
+        }
+
+        [HttpGet]
+        [Route("get-items/{userId}")]
+        public IActionResult GetItems(int userId)
+        {
+            if (userId == 0)
+                return BadRequest();
+            var result = _cartRepository.GetItems(userId);
+            if (result == null)
+                return BadRequest("Something went wrong with the query");
+            return Ok(result);
+        }
     }
 }

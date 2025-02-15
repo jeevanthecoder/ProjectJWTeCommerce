@@ -54,5 +54,39 @@ namespace ProjectJWTeCommerce.Controllers
             _productRepository.DeleteProduct(sellerId,productId);
             return Ok();
         }
+
+        [HttpGet]
+        [Route("get-products-of-seller/{sellerId}")]
+        public IActionResult GetProductsOfSeller(int sellerId)
+        {
+            if (sellerId == 0)
+                return BadRequest();
+            var result = _productRepository.GetProductsOfSeller(sellerId);
+            if (result == null)
+                return BadRequest("Something went wrong with the query");
+            return Ok(result);
+        }
+
+        [HttpGet]
+        [Route("get-product/{productId}")]
+        public IActionResult GetProduct(int productId)
+        {
+            if (productId == 0)
+                return BadRequest();
+            var result = _productRepository.GetProduct(productId);
+            if (result == null)
+                return BadRequest("Something went wrong with the query");
+            return Ok(result);
+        }
+
+        [HttpGet]
+        [Route("get-all-products")]
+        public IActionResult GetAllProducts()
+        {
+            var result = _productRepository.GetAllProducts();
+            if (result == null)
+                return BadRequest("Something went wrong with the query");
+            return Ok(result);
+        }
     }
 }

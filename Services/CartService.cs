@@ -74,6 +74,28 @@ namespace ProjectJWTeCommerce.Services
             return null;
         }
 
+        public Cart GetCart(int userId)
+        {
+            using (var connection = new SqlConnection(Database.ConnectionString))
+            {
+                connection.Open();
+                var query = @"SELECT * FROM Cart WHERE userId = @userId;";
+                var cart = connection.QueryFirstOrDefault<Cart>(query, new { userId = userId });
+                return cart;
+            }
+        }
+
+        public List<ItemQuantity> GetItems(int userId)
+        {
+            using (var connection = new SqlConnection(Database.ConnectionString))
+            {
+                connection.Open();
+                var query = @"SELECT * FROM ItemQuantity WHERE CId = (SELECT cartId FROM UserDetails WHERE UId = @userId);";
+                var items = connection.Query<ItemQuantity>(query, new { userId = userId }).ToList();
+                return items;
+            }
+        }
+
         public int RemoveFromCart(int userId, int productId)
         {
             using (var connection = new SqlConnection(Database.ConnectionString))

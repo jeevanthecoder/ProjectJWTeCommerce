@@ -121,6 +121,86 @@ namespace ProjectJWTeCommerce.Services
             }
         }
 
+        public List<Product> GetAllProducts()
+        {
+            using(var connection = new SqlConnection(Database.ConnectionString))
+            {
+                connection.Open();
+                try
+                {
+                    var query = @"SELECT * FROM Product p
+              LEFT JOIN ItemQuantity iq ON p.Pid = iq.PId
+              LEFT JOIN Features f ON p.Pid = f.PId;";
+
+                    var productDictionary = new Dictionary<int, Product>();
+
+                    var products = connection.Query<Product, ItemQuantity, Features, Product>(
+                        query,
+                        (product, itemQuantity, feature) =>
+                        {
+                            if (!productDictionary.TryGetValue(product.Pid, out var prod))
+                            {
+                                prod = product;
+                                prod.itemQuantities = new List<ItemQuantity>();
+                                prod.features = new List<Features>();
+                                productDictionary.Add(prod.Pid, prod);
+                            }
+                            if (itemQuantity != null)
+                                prod.itemQuantities.Add(itemQuantity);
+                            if (feature != null)
+                                prod.features.Add(feature);
+
+                            return prod;
+                        },
+                        splitOn: "QId, FId"
+                    ).Distinct().ToList();
+                    return products;
+                }
+                catch (Exception ex)
+                {
+                    return null;
+                }
+            }
+        }
+
+        public Product GetProduct(int productId)
+        {
+            using (var connection = new SqlConnection(Database.ConnectionString))
+            {
+                connection.Open();
+                try
+                {
+                    var productQuery = @"SELECT * FROM Product WHERE PId = @productId;";
+                    var productValue = connection.QuerySingleOrDefault<Product>(productQuery, new { productId = productId });
+                    if (productValue == null)
+                        throw new Exception("Product not found");
+                    return productValue;
+                }
+                catch (Exception ex)
+                {
+                    return null;
+                }
+            }   
+        }
+
+        public List<Product> GetProductsOfSeller(int sellerId)
+        {
+            using (var connection = new SqlConnection(Database.ConnectionString))
+            {
+                connection.Open();
+                try
+                {
+                    var productQuery = @"SELECT * FROM Product WHERE SId = @sellerId;";
+                    var productValues = connection.Query<Product>(productQuery, new { sellerId = sellerId }).ToList();
+                    return productValues;
+                }
+                catch (Exception ex)
+                {
+                    return null;
+                }
+            }
+        }
+
         public Product UpdateProduct(int sellerId, int productId, Product product)
         {
             using (var connection = new SqlConnection(Database.ConnectionString))
