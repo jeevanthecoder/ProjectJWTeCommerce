@@ -121,16 +121,19 @@ namespace ProjectJWTeCommerce.Services
             }
         }
 
-        public List<Product> GetAllProducts()
+        public List<Product> GetAllProducts(int pageNumber, int pageSize)
         {
-            using(var connection = new SqlConnection(Database.ConnectionString))
+            using (var connection = new SqlConnection(Database.ConnectionString))
             {
                 connection.Open();
                 try
                 {
-                    var query = @"SELECT * FROM Product p
-              LEFT JOIN ItemQuantity iq ON p.Pid = iq.PId
-              LEFT JOIN Features f ON p.Pid = f.PId;";
+                    var query = @"
+                SELECT * FROM Product p
+                LEFT JOIN ItemQuantity iq ON p.Pid = iq.PId
+                LEFT JOIN Features f ON p.Pid = f.PId
+                ORDER BY p.Pid
+                OFFSET @Offset ROWS FETCH NEXT @PageSize ROWS ONLY;";
 
                     var productDictionary = new Dictionary<int, Product>();
 
@@ -152,8 +155,10 @@ namespace ProjectJWTeCommerce.Services
 
                             return prod;
                         },
+                        new { Offset = (pageNumber - 1) * pageSize, PageSize = pageSize },
                         splitOn: "QId, FId"
                     ).Distinct().ToList();
+
                     return products;
                 }
                 catch (Exception ex)

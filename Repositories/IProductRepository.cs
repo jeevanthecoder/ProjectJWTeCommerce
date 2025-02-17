@@ -10,6 +10,6 @@ namespace ProjectJWTeCommerce.Repositories
         void DeleteProduct(int sellerId,int productId);
         List<Product> GetProductsOfSeller(int sellerId);
         Product GetProduct(int productId);
-        List<Product> GetAllProducts();
+        List<Product> GetAllProducts(int pageNumber, int pageSize);
     }
 }

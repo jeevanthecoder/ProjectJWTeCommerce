@@ -81,9 +81,9 @@ namespace ProjectJWTeCommerce.Controllers
 
         [HttpGet]
         [Route("get-all-products")]
-        public IActionResult GetAllProducts()
+        public IActionResult GetAllProducts([FromQuery]int pageNumber, [FromQuery]int pageSize)
         {
-            var result = _productRepository.GetAllProducts();
+            var result = _productRepository.GetAllProducts(pageNumber,pageSize);
             if (result == null)
                 return BadRequest("Something went wrong with the query");
             return Ok(result);
