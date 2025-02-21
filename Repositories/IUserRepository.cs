@@ -7,13 +7,13 @@ namespace ProjectJWTeCommerce.Repositories
 {
     public interface IUserRepository
     {
-        LoginUtility LoginService (LoginDTO loginDTO);
-        UserDetails RegisterService(UserDetails user);
-        IEnumerable<UserDetails> UpdateService(int id,UpdateUserDTO updateUserDTO);
-        Seller ConversionService(int id);
-        UserDetails GetUserById(int id);
-        List<Address> AddAddress(int userId,Address address);
-        Address UpdateAddress(int Aid,Address address);
-        List<Address> GetAddresses(int userId);
+        Task<LoginUtility> LoginService (LoginDTO loginDTO);
+        Task<UserDetails> RegisterService(UserDetails user);
+        Task<IEnumerable<UserDetails>> UpdateService(int id,UpdateUserDTO updateUserDTO);
+        Task<Seller> ConversionService(int id);
+        Task<UserDetails> GetUserById(int id);
+        Task<IEnumerable<Address>> AddAddress(int userId,Address address);
+        Task<Address> UpdateAddress(int Aid,Address address);
+        Task<IEnumerable<Address>> GetAddresses(int userId);
     }
 }

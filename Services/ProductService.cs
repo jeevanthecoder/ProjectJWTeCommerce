@@ -9,7 +9,7 @@ namespace ProjectJWTeCommerce.Services
 {
     public class ProductService : IProductRepository
     {
-        public List<Product> AddProduct(int sellerId, Product product)
+        public async Task<IEnumerable<Product>> AddProduct(int sellerId, Product product)
         {
             using (var connection = new SqlConnection(Database.ConnectionString))
             {
@@ -22,7 +22,7 @@ namespace ProjectJWTeCommerce.Services
                                     OUTPUT INSERTED.PId
                                     VALUES(@sellerid, @title, @category, @imgURL, @description, @image, @price, @quantity) ;
                                     UPDATE sellers SET NoOfProducts = NoOfProducts + 1 WHERE SId = @sellerid ;";
-                        var productId = connection.ExecuteScalar<int>(productQuery, new
+                        var productId = await connection.ExecuteScalarAsync<int>(productQuery, new
                         {
                             sellerid = sellerId,
                             title = product.PTitle,
@@ -36,7 +36,7 @@ namespace ProjectJWTeCommerce.Services
                         if (productId == null)
                             throw new Exception("productId not found");
 
-                        var productValue = connection.QuerySingleOrDefault<Product>(
+                        var productValue =  await connection.QuerySingleAsync<Product>(
                                "SELECT * FROM Product WHERE PId = @PId",
                                new { PId = productId },
                                transaction
@@ -49,30 +49,31 @@ namespace ProjectJWTeCommerce.Services
                         foreach (var feature in product.features)
                         {
                             var featureQuery = "INSERT INTO Features (PId, FName) VALUES (@PId, @FeatureName);";
-                            connection.Execute(featureQuery, new { PId = productValue.Pid, FeatureName = feature.FName }, transaction);
+                            await connection.ExecuteAsync(featureQuery, new { PId = productValue.Pid, FeatureName = feature.FName }, transaction);
                         }
 
                         // Insert multiple ItemQuantities
                         foreach (var item in product.itemQuantities)
                         {
                             var itemQuantityQuery = "INSERT INTO ItemQuantity (PId, Quantity) VALUES (@PId, @Quantity);";
-                            connection.Execute(itemQuantityQuery, new { PId = productValue.Pid, Quantity = item.Quantity }, transaction);
+                            await connection.ExecuteAsync(itemQuantityQuery, new { PId = productValue.Pid, Quantity = item.Quantity }, transaction);
                         }
                         transaction.Commit();
                     }
                     var productquery = @"SELECT * FROM Product WHERE SId=@id";
-                    var productValues = connection.Query<Product>(productquery, new { id = sellerId }).ToList();
+                    var productValues = await connection.QueryAsync<Product>(productquery, new { id = sellerId });
                     return productValues;
                 }
                 catch (Exception ex)
                 {
+                    //throw ex;
                     return null;
                 }
             }
 
         }
 
-        public void DeleteProduct(int sellerId, int productId)
+        public async Task DeleteProduct(int sellerId, int productId)
         {
             int price = 0;
             using (var connection = new SqlConnection(Database.ConnectionString))
@@ -88,17 +89,17 @@ namespace ProjectJWTeCommerce.Services
                                     SELECT @price = p.PPrice FROM Product p WHERE p.Pid = @productId;
                                     SELECT @price AS Price;";
 
-                        var result = connection.QueryFirstOrDefault(query, new { productId = productId}, transaction);
+                        var result = await connection.QueryFirstOrDefaultAsync(query, new { productId = productId}, transaction);
                         if (result != null)
                             price = result.Price;
 
                         var fetchItemQuantities = @"SELECT * FROM ItemQuantity q WHERE q.PId = @productId;";
-                        var items = connection.Query<ItemQuantity>(fetchItemQuantities, new {productId = productId}, transaction).ToList();
+                        var items = await connection.QueryAsync<ItemQuantity>(fetchItemQuantities, new {productId = productId}, transaction);
 
                         foreach (var item in items)
                         {
                             var correctingTheCost = @"UPDATE Cart SET TotalCost = TotalCost - (@quantity * @price) WHERE CId = @cid;";
-                            connection.Execute(correctingTheCost, new {quantity = item.Quantity, price = price, cid = item.CId}, transaction);
+                            await connection.ExecuteAsync(correctingTheCost, new {quantity = item.Quantity, price = price, cid = item.CId}, transaction);
                         }
 
                         var deleteQuery = @"
@@ -106,7 +107,7 @@ namespace ProjectJWTeCommerce.Services
 
                                     -- Update Seller's Product Count
                                     UPDATE sellers SET NoOfProducts = NoOfProducts - 1 WHERE SId = @sellerId;";
-                        connection.Execute(deleteQuery, new {sellerId = sellerId, productId = productId}, transaction);
+                        await connection.ExecuteAsync(deleteQuery, new {sellerId = sellerId, productId = productId}, transaction);
 
 
 
@@ -121,7 +122,7 @@ namespace ProjectJWTeCommerce.Services
             }
         }
 
-        public List<Product> GetAllProducts(int pageNumber, int pageSize)
+        public async Task<IEnumerable<Product>> GetAllProducts(int pageNumber, int pageSize)
         {
             using (var connection = new SqlConnection(Database.ConnectionString))
             {
@@ -137,7 +138,7 @@ namespace ProjectJWTeCommerce.Services
 
                     var productDictionary = new Dictionary<int, Product>();
 
-                    var products = connection.Query<Product, ItemQuantity, Features, Product>(
+                    var products =connection.Query<Product, ItemQuantity, Features, Product>(
                         query,
                         (product, itemQuantity, feature) =>
                         {
@@ -168,7 +169,7 @@ namespace ProjectJWTeCommerce.Services
             }
         }
 
-        public Product GetProduct(int productId)
+        public async Task<Product> GetProduct(int productId)
         {
             using (var connection = new SqlConnection(Database.ConnectionString))
             {
@@ -176,7 +177,7 @@ namespace ProjectJWTeCommerce.Services
                 try
                 {
                     var productQuery = @"SELECT * FROM Product WHERE PId = @productId;";
-                    var productValue = connection.QuerySingleOrDefault<Product>(productQuery, new { productId = productId });
+                    var productValue = await connection.QuerySingleOrDefaultAsync<Product>(productQuery, new { productId = productId });
                     if (productValue == null)
                         throw new Exception("Product not found");
                     return productValue;
@@ -188,7 +189,7 @@ namespace ProjectJWTeCommerce.Services
             }   
         }
 
-        public List<Product> GetProductsOfSeller(int sellerId)
+        public async Task<IEnumerable<Product>> GetProductsOfSeller(int sellerId)
         {
             using (var connection = new SqlConnection(Database.ConnectionString))
             {
@@ -196,7 +197,7 @@ namespace ProjectJWTeCommerce.Services
                 try
                 {
                     var productQuery = @"SELECT * FROM Product WHERE SId = @sellerId;";
-                    var productValues = connection.Query<Product>(productQuery, new { sellerId = sellerId }).ToList();
+                    var productValues = await connection.QueryAsync<Product>(productQuery, new { sellerId = sellerId });
                     return productValues;
                 }
                 catch (Exception ex)
@@ -206,7 +207,7 @@ namespace ProjectJWTeCommerce.Services
             }
         }
 
-        public Product UpdateProduct(int sellerId, int productId, Product product)
+        public async Task<Product> UpdateProduct(int sellerId, int productId, Product product)
         {
             using (var connection = new SqlConnection(Database.ConnectionString))
             {
@@ -216,13 +217,13 @@ namespace ProjectJWTeCommerce.Services
                     using (var transaction = connection.BeginTransaction())
                     {
                         var verifySeller = @"SELECT 1 FROM Product WHERE SId = @sellerId AND Pid = @productId;";
-                        var returnVal = connection.QuerySingle<int>(verifySeller,new { sellerId = sellerId, productId = productId });
+                        var returnVal = await connection.QuerySingleAsync<int>(verifySeller,new { sellerId = sellerId, productId = productId },transaction);
                         if (returnVal == null || returnVal == 0)
                             return null;
                         var productQuery = @"UPDATE Product SET PTitle = @title, PCategory = @category, PImageURL = @imgURL,
                                     PDescription = @description, Image = @image, PPrice = @price, Quantity = @quantity
                                     WHERE Pid = @productId;";
-                        var productIdVal = connection.ExecuteScalar<int>(productQuery, new
+                        var productIdVal = await connection.ExecuteScalarAsync<int>(productQuery, new
                         {
                             productId = productId,
                             title = product.PTitle,
@@ -240,26 +241,26 @@ namespace ProjectJWTeCommerce.Services
                         foreach (var feature in product.features)
                         {
                             var featureQuery = "UPDATE Features SET FName = @FeatureName WHERE PId = @PId;";
-                            connection.Execute(featureQuery, new { PId = productId, FeatureName = feature.FName }, transaction);
+                            await connection.ExecuteAsync(featureQuery, new { PId = productId, FeatureName = feature.FName }, transaction);
                         }
 
                         // Insert multiple ItemQuantities
                         foreach (var item in product.itemQuantities)
                         {
                             var itemQuantityQuery = "UPDATE ItemQuantity SET Quantity = @Quantity WHERE PId = @PId;";
-                            connection.Execute(itemQuantityQuery, new { PId = productId, Quantity = item.Quantity }, transaction);
+                            await connection.ExecuteAsync(itemQuantityQuery, new { PId = productId, Quantity = item.Quantity }, transaction);
                         }
                         transaction.Commit();
-                        var productValue = connection.QuerySingleOrDefault<Product>(
+                        var productValue = await connection.QuerySingleOrDefaultAsync<Product>(
                                "SELECT * FROM Product WHERE PId = @PId",
-                               new { PId = productId },
-                               transaction
+                               new { PId = productId }
                         );
                         return productValue;
                     }
                 }
                 catch (Exception ex)
                 {
+                    //throw ex;
                     return null;
                 }
             }

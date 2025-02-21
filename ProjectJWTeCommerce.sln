@@ -1,9 +1,11 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
-VisualStudioVersion = 17.12.35707.178 d17.12
+VisualStudioVersion = 17.12.35707.178
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ProjectJWTeCommerce", "ProjectJWTeCommerce.csproj", "{BAFAD34A-DDA2-4C0C-8060-4F3BECB4B39A}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CalculatorForUnitTesting.Tests", "..\CalculatorForUnitTesting.Tests\CalculatorForUnitTesting.Tests.csproj", "{14DEE3FA-9075-49EA-A065-06ADBC71F3D5}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -15,6 +17,10 @@ Global
 		{BAFAD34A-DDA2-4C0C-8060-4F3BECB4B39A}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{BAFAD34A-DDA2-4C0C-8060-4F3BECB4B39A}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{BAFAD34A-DDA2-4C0C-8060-4F3BECB4B39A}.Release|Any CPU.Build.0 = Release|Any CPU
+		{14DEE3FA-9075-49EA-A065-06ADBC71F3D5}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{14DEE3FA-9075-49EA-A065-06ADBC71F3D5}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{14DEE3FA-9075-49EA-A065-06ADBC71F3D5}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{14DEE3FA-9075-49EA-A065-06ADBC71F3D5}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

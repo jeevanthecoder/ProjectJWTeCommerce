@@ -18,14 +18,14 @@ namespace ProjectJWTeCommerce.Controllers
 
         [HttpPost]
         [Route("register-user")]
-        public IActionResult RegisterUser(UserDetails user) 
+        public async Task<IActionResult> RegisterUser(UserDetails user) 
         {
             if (user == null)
             {
                 return BadRequest();
             }
 
-            var result = _userRepository.RegisterService(user);
+            var result = await _userRepository.RegisterService(user);
             if (result == null)
                 return BadRequest("Something went wrong with the query");
             return Ok(result);
@@ -33,14 +33,14 @@ namespace ProjectJWTeCommerce.Controllers
 
         [HttpPost]
         [Route("login-user")]
-        public IActionResult LoginUser(LoginDTO loginDTO)
+        public async Task<IActionResult> LoginUser(LoginDTO loginDTO)
         {
             if (loginDTO == null)
             {
                 return BadRequest();
             }
 
-            var result = _userRepository.LoginService(loginDTO);
+            var result = await _userRepository.LoginService(loginDTO);
             if (result == null)
                 return BadRequest("Something went wrong with the query");
             return Ok(result);
@@ -48,14 +48,14 @@ namespace ProjectJWTeCommerce.Controllers
 
         [HttpPut]
         [Route("update-user/{userId}")]
-        public IActionResult UpdateUser(int userId,UpdateUserDTO updateUserDTO)
+        public async Task<IActionResult> UpdateUser(int userId,UpdateUserDTO updateUserDTO)
         {
             if(updateUserDTO == null || userId == 0)
             {
                 return BadRequest();
             }
 
-            var result = _userRepository.UpdateService(userId, updateUserDTO);
+            var result = await _userRepository.UpdateService(userId, updateUserDTO);
             if (result == null)
                 return BadRequest("Something went wrong with the query");
             return Ok(result);
@@ -63,14 +63,14 @@ namespace ProjectJWTeCommerce.Controllers
 
         [HttpGet]
         [Route("convert-To-Seller/{userId}")]
-        public IActionResult ConvertToSeller(int userId)
+        public async Task<IActionResult> ConvertToSeller(int userId)
         {
             if(userId == 0)
             {
                 return BadRequest();
             }
 
-            var result = _userRepository.ConversionService(userId);
+            var result = await _userRepository.ConversionService(userId);
             if (result == null)
                 return BadRequest("Something went wrong with the query");
             return Ok(result);
@@ -78,12 +78,12 @@ namespace ProjectJWTeCommerce.Controllers
 
         [HttpPost]
         [Route("add-address/{userId}")]
-        public IActionResult AddAddress(int userId, Address address)
+        public async Task<IActionResult> AddAddress(int userId, Address address)
         {
             if(userId==0 || address==null)
                 { return BadRequest(); }
 
-            var result = _userRepository.AddAddress(userId, address);
+            var result = await _userRepository.AddAddress(userId, address);
             if (result == null)
                 return BadRequest("Something went wrong with the query");
             return Ok(result);
@@ -91,12 +91,12 @@ namespace ProjectJWTeCommerce.Controllers
 
         [HttpPut]
         [Route("update-address/{AId}")]
-        public IActionResult UpdateResult(int AId, Address address)
+        public async Task<IActionResult> UpdateResult(int AId, Address address)
         {
             if(address==null || AId==0)
                 { return BadRequest(); }
 
-            var result = _userRepository.UpdateAddress(AId, address);
+            var result = await _userRepository.UpdateAddress(AId, address);
             if(result==null)
                 return BadRequest("Something went wrong with the query");
             return Ok(result);
@@ -104,12 +104,12 @@ namespace ProjectJWTeCommerce.Controllers
 
         [HttpGet]
         [Route("get-user/{UId}")]
-        public IActionResult GetUser(int UId)
+        public async Task<IActionResult> GetUser(int UId)
         {
             if(UId==0)
                 { return BadRequest(); }
 
-            var result = _userRepository.GetUserById(UId);
+            var result = await _userRepository.GetUserById(UId);
             if (result == null)
                 return BadRequest("Something went wrong with the query");
             return Ok(result);
@@ -117,14 +117,14 @@ namespace ProjectJWTeCommerce.Controllers
 
         [HttpGet]
         [Route("get-addresses/{UId}")]
-        public IActionResult GetAddresses(int UId)
+        public async Task<IActionResult> GetAddresses(int UId)
         {
             if (UId == 0)
             {
                 return BadRequest();
             }
 
-            var result = _userRepository.GetAddresses(UId);
+            var result = await _userRepository.GetAddresses(UId);
             if (result == null)
                 return BadRequest("Something went wrong with the query");
             return Ok(result);

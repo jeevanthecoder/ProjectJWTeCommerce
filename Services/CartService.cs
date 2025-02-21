@@ -11,7 +11,7 @@ namespace ProjectJWTeCommerce.Services
     public class CartService : ICartRepository
     {
 
-        public Cart AddToCart(int userId, int productId, int addressId)
+        public async Task<Cart> AddToCart(int userId, int productId, int addressId)
         {
             using (var connection = new SqlConnection(Database.ConnectionString))
             {
@@ -34,7 +34,7 @@ namespace ProjectJWTeCommerce.Services
                                     END
 
                                     SELECT @InsertedCartId AS CartId;";
-                        var cartId = connection.ExecuteScalar<int>(cart_query, new { totalcost = 0, userid = userId, addressid = addressId }, transaction);
+                        var cartId = await connection.ExecuteScalarAsync<int>(cart_query, new { totalcost = 0, userid = userId, addressid = addressId }, transaction);
 
                         if (cartId == 0)
                         {
@@ -49,17 +49,17 @@ namespace ProjectJWTeCommerce.Services
                                     WHEN NOT MATCHED THEN
                                         INSERT (PId, CId, quantity) VALUES (source.PId, @cartid, source.Quantity);";
 
-                        connection.Execute(item_query, new { ProductId = productId, IncrementBy = 1, cartid = cartId }, transaction);
+                        await connection.ExecuteAsync(item_query, new { ProductId = productId, IncrementBy = 1, cartid = cartId }, transaction);
 
                         var incrementValue = @"SELECT * FROM Product WHERE Pid = @productId;";
-                        var product = connection.QuerySingle<Product>(incrementValue, new { productId = productId }, transaction);
+                        var product = await connection.QuerySingleAsync<Product>(incrementValue, new { productId = productId }, transaction);
 
                         var costIncrement = @"UPDATE Cart SET TotalCost = TotalCost + @incrementValue;";
-                        connection.Execute(costIncrement, new { incrementValue = product.PPrice }, transaction);
+                        await connection.ExecuteAsync(costIncrement, new { incrementValue = product.PPrice }, transaction);
 
                         transaction.Commit();
                         var cartQuery = @"SELECT * FROM Cart WHERE CId = @cartId;";
-                        var cart = connection.QuerySingle<Cart>(cartQuery, new { cartId = cartId }, transaction);
+                        var cart = await connection.QuerySingleAsync<Cart>(cartQuery, new { cartId = cartId }, transaction);
 
                         return cart;
 
@@ -67,6 +67,7 @@ namespace ProjectJWTeCommerce.Services
                 }
                 catch (Exception ex)
                 {
+                    //throw ex;
                     return null;
                 }
 
@@ -74,29 +75,30 @@ namespace ProjectJWTeCommerce.Services
             return null;
         }
 
-        public Cart GetCart(int userId)
+
+        public async Task<Cart> GetCart(int userId)
         {
             using (var connection = new SqlConnection(Database.ConnectionString))
             {
                 connection.Open();
                 var query = @"SELECT * FROM Cart WHERE userId = @userId;";
-                var cart = connection.QueryFirstOrDefault<Cart>(query, new { userId = userId });
+                var cart = await connection.QueryFirstOrDefaultAsync<Cart>(query, new { userId = userId });
                 return cart;
             }
         }
 
-        public List<ItemQuantity> GetItems(int userId)
+        public async Task<IEnumerable<ItemQuantity>> GetItems(int userId)
         {
             using (var connection = new SqlConnection(Database.ConnectionString))
             {
                 connection.Open();
                 var query = @"SELECT * FROM ItemQuantity WHERE CId = (SELECT cartId FROM UserDetails WHERE UId = @userId);";
-                var items = connection.Query<ItemQuantity>(query, new { userId = userId }).ToList();
+                var items = await connection.QueryAsync<ItemQuantity>(query, new { userId = userId });
                 return items;
             }
         }
 
-        public int RemoveFromCart(int userId, int productId)
+        public async Task<int> RemoveFromCart(int userId, int productId)
         {
             using (var connection = new SqlConnection(Database.ConnectionString))
             {
@@ -114,7 +116,7 @@ namespace ProjectJWTeCommerce.Services
                                     SELECT @price AS Price, @cartid AS CartId;"
                         ;
 
-                        var result = connection.QueryFirstOrDefault(query, new { productId = productId, userId = userId }, transaction);
+                        var result = await connection.QueryFirstOrDefaultAsync(query, new { productId = productId, userId = userId }, transaction);
                         if(result.CartId != 0 && result.Price != 0)
                         {
                             cartId = result.CartId;
@@ -130,7 +132,7 @@ namespace ProjectJWTeCommerce.Services
                                                 WHEN TotalCost - @price < 0 THEN 0 
                                                 ELSE TotalCost - @price 
                                                 END WHERE CId = @cartId; ";
-                        connection.Execute(removeProductQuery, new { productId = productId, cartId = cartId, price = price}, transaction);
+                        await connection.ExecuteAsync(removeProductQuery, new { productId = productId, cartId = cartId, price = price}, transaction);
                         transaction.Commit();
                         return 1;
                     }

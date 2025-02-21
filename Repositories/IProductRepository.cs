@@ -5,11 +5,11 @@ namespace ProjectJWTeCommerce.Repositories
 {
     public interface IProductRepository
     {
-        List<Product> AddProduct(int sellerId,Product product);
-        Product UpdateProduct(int sellerId,int productId,Product product);
-        void DeleteProduct(int sellerId,int productId);
-        List<Product> GetProductsOfSeller(int sellerId);
-        Product GetProduct(int productId);
-        List<Product> GetAllProducts(int pageNumber, int pageSize);
+        Task<IEnumerable<Product>> AddProduct(int sellerId,Product product);
+        Task<Product> UpdateProduct(int sellerId,int productId,Product product);
+        Task DeleteProduct(int sellerId,int productId);
+        Task<IEnumerable<Product>> GetProductsOfSeller(int sellerId);
+        Task<Product> GetProduct(int productId);
+        Task<IEnumerable<Product>> GetAllProducts(int pageNumber, int pageSize);
     }
 }

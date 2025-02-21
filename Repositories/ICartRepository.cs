@@ -5,9 +5,9 @@ namespace ProjectJWTeCommerce.Repositories
 {
     public interface ICartRepository
     {
-        Cart AddToCart(int userId, int productId, int addressId);
-        int RemoveFromCart(int userId, int productId);
-        Cart GetCart(int userId);
-        List<ItemQuantity> GetItems(int userId);
+        Task<Cart> AddToCart(int userId, int productId, int addressId);
+        Task<int> RemoveFromCart(int userId, int productId);
+        Task<Cart> GetCart(int userId);
+        Task<IEnumerable<ItemQuantity>> GetItems(int userId);
     }
 }

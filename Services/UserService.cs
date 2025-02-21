@@ -16,6 +16,7 @@ namespace ProjectJWTeCommerce.Services
 {
     public class UserService : IUserRepository
     {
+
         private readonly MyDBContext _dbContext;
         private readonly IConfiguration configuration;
 
@@ -25,7 +26,7 @@ namespace ProjectJWTeCommerce.Services
             this.configuration = configuration;
         }
 
-        public List<Address> AddAddress(int id, Address address)
+        public async Task<IEnumerable<Address>> AddAddress(int id, Address address)
         {
             using (var connection = new SqlConnection(Database.ConnectionString))
             {
@@ -35,7 +36,7 @@ namespace ProjectJWTeCommerce.Services
                 SELECT * FROM Address WHERE userId = @userId ;";
                 try
                 {
-                    var addressValues = connection.Query<Address>(query, new
+                    var addressValues = await connection.QueryAsync<Address>(query, new
                     {
                         userId = id,
                         name = address.FullName,
@@ -47,33 +48,30 @@ namespace ProjectJWTeCommerce.Services
                         house = address.HouseDetails,
                         street = address.StreetDetails
 
-                    }).ToList();
+                    });
                     return addressValues;
                 }
                 catch (Exception ex)
                 {
                     return null;
                 }
-                connection.Close();
-
-
             }
         }
 
-        public Seller ConversionService(int userid)
+        public async Task<Seller> ConversionService(int userid)
         {
             using (var connection = new SqlConnection(Database.ConnectionString))
             {
                 connection.Open();
                 var getuser = @"SELECT * FROM UserDetails WHERE UId = @id;";
-                UserDetails user = connection.QueryFirst<UserDetails>(getuser,new {id=userid});
+                UserDetails user = await connection.QueryFirstAsync<UserDetails>(getuser, new { id = userid });
                 var query = @"INSERT INTO sellers (SellerName,SellerPhone,SellerEmail,NoOfProducts,userId) VALUES (@name, @phone, @email, @num, @userId);
                 UPDATE UserDetails SET sellerId = SCOPE_IDENTITY() WHERE UId = @userId ;
                 SELECT * FROM sellers WHERE SId = SCOPE_IDENTITY();";
 
                 try
                 {
-                    var seller = connection.QuerySingle<Seller>(query, new
+                    var seller = connection.QuerySingleAsync<Seller>(query, new
                     {
                         name = user.UserName,
                         phone = user.UserPhone,
@@ -82,7 +80,7 @@ namespace ProjectJWTeCommerce.Services
                         userId = user.UId
 
                     });
-                    return seller;
+                    return await seller;
                 }
                 catch (Exception ex)
                 {
@@ -91,7 +89,7 @@ namespace ProjectJWTeCommerce.Services
             }
         }
 
-        public List<Address> GetAddresses(int userId)
+        public async Task<IEnumerable<Address>> GetAddresses(int userId)
         {
             using (var connection = new SqlConnection(Database.ConnectionString))
             {
@@ -99,29 +97,11 @@ namespace ProjectJWTeCommerce.Services
                 var query = "SELECT * FROM Address WHERE userId=@userId;";
                 try
                 {
-                    var addresses = connection.Query<Address>(query, new
+                    var addresses = await connection.QueryAsync<Address>(query, new
                     {
                         userId = userId
-                    }).ToList();
+                    });
                     return addresses;
-                }catch(Exception ex)
-                {
-                    return null;
-                }
-            }
-        }
-
-        public UserDetails GetUserById(int id)
-        {
-            using (var connection = new SqlConnection(Database.ConnectionString))
-            {
-                connection.Open();
-                var query = "SELECT * FROM UserDetails WHERE UId = @id;";
-                try
-                {
-                    var userValues = connection.QuerySingle<UserDetails>(query, new { id = id });
-
-                    return userValues;
                 }
                 catch (Exception ex)
                 {
@@ -130,46 +110,73 @@ namespace ProjectJWTeCommerce.Services
             }
         }
 
-        public LoginUtility LoginService(LoginDTO loginDTO)
+        public async Task<UserDetails> GetUserById(int id)
         {
-            var user = _dbContext.UserDetails.FirstOrDefault(x => x.UserEmail == loginDTO.email);
-            var decodedPassword = EncodeDecode.Decrypt(user.UserPassword).ToString();
-            //Response.Write("User : "+user);
-
-            if (user != null && decodedPassword == loginDTO.password)
+            using (var connection = new SqlConnection(Database.ConnectionString))
             {
-                var claims = new[]
+                connection.Open();
+                var query = "SELECT * FROM UserDetails WHERE UId = @id;";
+                try
                 {
+                    var userValues = connection.QuerySingleAsync<UserDetails>(query, new { id = id });
+
+                    return await userValues;
+                }
+                catch (Exception ex)
+                {
+                    return null;
+                }
+            }
+        }
+
+        public async Task<LoginUtility> LoginService(LoginDTO loginDTO)
+        {
+            using (var connection = new SqlConnection(Database.ConnectionString))
+            {
+                connection.Open();
+                var query = "SELECT * FROM UserDetails WHERE UserEmail = @email;";
+                var user = await connection.QueryFirstOrDefaultAsync<UserDetails>(query, new { email = loginDTO.email });
+
+                var decodedPassword = EncodeDecode.Decrypt(user.UserPassword).ToString();
+                //Response.Write("User : "+user);
+
+                if (user != null && decodedPassword == loginDTO.password)
+                {
+                    var claims = new[]
+                    {
         new Claim(JwtRegisteredClaimNames.Sub, configuration["Jwt:Subject"]),
         new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
         new Claim("UserName", user.UserName.ToString()),
         new Claim("UserEmail",user.UserEmail.ToString()),
 
     };
-                var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(configuration["Jwt:Key"]));
-                var signin = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
-                var token = new JwtSecurityToken(
-                    configuration["Jwt:Issuer"],
-                    configuration["Jwt:Audience"],
-                    claims,
-                    expires: DateTime.UtcNow.AddMinutes(60),
-                    signingCredentials: signin
-                    );
+                    var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(configuration["Jwt:Key"]));
+                    var signin = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
+                    var token = new JwtSecurityToken(
+                        configuration["Jwt:Issuer"],
+                        configuration["Jwt:Audience"],
+                        claims,
+                        expires: DateTime.UtcNow.AddMinutes(60),
+                        signingCredentials: signin
+                        );
 
-                string tokenValue = new JwtSecurityTokenHandler().WriteToken(token);
-                LoginUtility values = new LoginUtility();
-                values.Token = tokenValue;
-                values.user = user;
-                return values;
+                    string tokenValue = new JwtSecurityTokenHandler().WriteToken(token);
+                    LoginUtility values = new LoginUtility();
+                    values.Token = tokenValue;
+                    values.user = user;
+                    return values;
 
+                }
+                else
+                    return new LoginUtility();
             }
-            else
-                return new LoginUtility();
         }
 
-        public UserDetails RegisterService(UserDetails user)
+
+
+        public async Task<UserDetails> RegisterService(UserDetails user)
         {
-            using(var connection = new SqlConnection(Database.ConnectionString))
+            using (var connection = new SqlConnection(Database.ConnectionString))
             {
                 connection.Open();
                 var query = @"
@@ -179,7 +186,7 @@ namespace ProjectJWTeCommerce.Services
 
                 try
                 {
-                    var userDetails = connection.QuerySingle<UserDetails>(query, new
+                    var userDetails = await connection.QuerySingleAsync<UserDetails>(query, new
                     {
                         name = user.UserName,
                         password = EncodeDecode.Encrypt(user.UserPassword),
@@ -199,13 +206,14 @@ namespace ProjectJWTeCommerce.Services
                 }
                 catch (Exception ex)
                 {
+                    //throw ex;
                     return null;
                 }
                 connection.Close();
             }
         }
 
-        public Address UpdateAddress(int AId, Address address)
+        public async Task<Address> UpdateAddress(int AId, Address address)
         {
             using (var connection = new SqlConnection(Database.ConnectionString))
             {
@@ -216,7 +224,7 @@ namespace ProjectJWTeCommerce.Services
                     SELECT * FROM Address WHERE AId = @aid;";
                 try
                 {
-                    var addressValue = connection.QuerySingle<Address>(query, new
+                    var addressValue = await connection.QuerySingleAsync<Address>(query, new
                     {
                         name = address.FullName,
                         phone = address.Phone,
@@ -239,7 +247,7 @@ namespace ProjectJWTeCommerce.Services
             }
         }
 
-        public IEnumerable<UserDetails> UpdateService(int id, UpdateUserDTO updateUserDTO)
+        public async Task<IEnumerable<UserDetails>> UpdateService(int id, UpdateUserDTO updateUserDTO)
         {
             using (var connection = new SqlConnection(Database.ConnectionString))
             {
@@ -250,7 +258,7 @@ namespace ProjectJWTeCommerce.Services
 
                 try
                 {
-                    var userDetails = connection.Query<UserDetails>(query, new
+                    var userDetails = await connection.QueryAsync<UserDetails>(query, new
                     {
                         id = id,
                         name = updateUserDTO.UserName,
