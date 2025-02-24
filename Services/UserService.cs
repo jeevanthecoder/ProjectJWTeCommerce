@@ -89,6 +89,40 @@ namespace ProjectJWTeCommerce.Services
             }
         }
 
+        public async Task DeleteAddress(int addressId)
+        {
+            using (var connection = new SqlConnection(Database.ConnectionString))
+            {
+                connection.Open();
+                var query = "DELETE FROM Address WHERE AId=@addressId;";
+                try
+                {
+                    await connection.QueryAsync<Address>(query, new { addressId = addressId });
+                }catch(Exception e)
+                {
+
+                }
+            }
+        }
+
+        public async Task<Address> GetAddressById(int id)
+        {
+            using(var connection = new SqlConnection(Database.ConnectionString))
+            {
+                connection.Open();
+                var query = "SELECT * FROM Address WHERE AId=@aid;";
+                try
+                {
+                    var addressValue = await connection.QuerySingleAsync<Address>(query, new { aid = id });
+                    return addressValue;
+
+                }catch(Exception e)
+                {
+                    return null;
+                }
+            }
+        }
+
         public async Task<IEnumerable<Address>> GetAddresses(int userId)
         {
             using (var connection = new SqlConnection(Database.ConnectionString))
@@ -104,6 +138,26 @@ namespace ProjectJWTeCommerce.Services
                     return addresses;
                 }
                 catch (Exception ex)
+                {
+                    return null;
+                }
+            }
+        }
+
+        public async Task<Seller> GetSellerById(int id)
+        {
+            using(var connection = new SqlConnection(Database.ConnectionString))
+            {
+                connection.Open();
+                var query = "SELECT * FROM sellers WHERE SId = @sId";
+                try
+                {
+                    var sellerValue = await connection.QuerySingleAsync<Seller>(query, new
+                    {
+                        sId = id
+                    });
+                    return sellerValue;
+                }catch(Exception ex)
                 {
                     return null;
                 }
@@ -135,40 +189,48 @@ namespace ProjectJWTeCommerce.Services
             {
                 connection.Open();
                 var query = "SELECT * FROM UserDetails WHERE UserEmail = @email;";
-                var user = await connection.QueryFirstOrDefaultAsync<UserDetails>(query, new { email = loginDTO.email });
-
-                var decodedPassword = EncodeDecode.Decrypt(user.UserPassword).ToString();
-                //Response.Write("User : "+user);
-
-                if (user != null && decodedPassword == loginDTO.password)
+                try
                 {
-                    var claims = new[]
+                    var user = await connection.QueryFirstOrDefaultAsync<UserDetails>(query, new { email = loginDTO.email });
+
+                    var decodedPassword = EncodeDecode.Decrypt(user.UserPassword).ToString();
+                    //Response.Write("User : "+user);
+
+                    if (user != null && decodedPassword == loginDTO.password)
                     {
+                        var claims = new[]
+                        {
         new Claim(JwtRegisteredClaimNames.Sub, configuration["Jwt:Subject"]),
         new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
         new Claim("UserName", user.UserName.ToString()),
         new Claim("UserEmail",user.UserEmail.ToString()),
 
     };
-                    var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(configuration["Jwt:Key"]));
-                    var signin = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
-                    var token = new JwtSecurityToken(
-                        configuration["Jwt:Issuer"],
-                        configuration["Jwt:Audience"],
-                        claims,
-                        expires: DateTime.UtcNow.AddMinutes(60),
-                        signingCredentials: signin
-                        );
+                        var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(configuration["Jwt:Key"]));
+                        var signin = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
+                        var token = new JwtSecurityToken(
+                            configuration["Jwt:Issuer"],
+                            configuration["Jwt:Audience"],
+                            claims,
+                            expires: DateTime.UtcNow.AddMinutes(60),
+                            signingCredentials: signin
+                            );
 
-                    string tokenValue = new JwtSecurityTokenHandler().WriteToken(token);
-                    LoginUtility values = new LoginUtility();
-                    values.Token = tokenValue;
-                    values.user = user;
-                    return values;
+                        string tokenValue = new JwtSecurityTokenHandler().WriteToken(token);
+                        LoginUtility values = new LoginUtility();
+                        values.Token = tokenValue;
+                        values.user = user;
+                        return values;
 
+                    }
+                    else
+                    {
+                        return new LoginUtility();
+                    }
                 }
-                else
-                    return new LoginUtility();
+                catch (Exception e) {
+                    return null;
+                }
             }
         }
 

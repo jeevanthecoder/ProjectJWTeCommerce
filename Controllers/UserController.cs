@@ -46,6 +46,45 @@ namespace ProjectJWTeCommerce.Controllers
             return Ok(result);
         }
 
+        [HttpDelete("delete-address/{addressId}")]
+        public async Task<IActionResult> DeleteAddress(int addressId)
+        {
+            if(addressId == 0)
+                return BadRequest();
+
+            await _userRepository.DeleteAddress(addressId);
+            return Ok();
+        }
+
+        [HttpGet]
+        [Route("get-seller/{sellerId}")]
+        public async Task<IActionResult> GetSeller(int sellerId)
+        {
+            if (sellerId == 0)
+                return BadRequest();
+
+            var result = await _userRepository.GetSellerById(sellerId);
+            if(result == null)
+            {
+                return BadRequest();
+            }
+            return Ok(result);
+        }
+
+        [HttpGet]
+        [Route("get-address/{addressId}")]
+        public async Task<IActionResult> GetAddress(int addressId)
+        {
+            if (addressId == 0)
+                return BadRequest();
+
+            var result = await _userRepository.GetAddressById(addressId);
+            if (result == null)
+            {
+                return BadRequest();
+            }
+            return Ok(result);
+        }
         [HttpPut]
         [Route("update-user/{userId}")]
         public async Task<IActionResult> UpdateUser(int userId,UpdateUserDTO updateUserDTO)

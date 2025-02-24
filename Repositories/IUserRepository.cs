@@ -12,6 +12,10 @@ namespace ProjectJWTeCommerce.Repositories
         Task<IEnumerable<UserDetails>> UpdateService(int id,UpdateUserDTO updateUserDTO);
         Task<Seller> ConversionService(int id);
         Task<UserDetails> GetUserById(int id);
+        Task<Seller> GetSellerById(int id);
+        Task<Address> GetAddressById(int id);
+
+        Task DeleteAddress(int addressId);
         Task<IEnumerable<Address>> AddAddress(int userId,Address address);
         Task<Address> UpdateAddress(int Aid,Address address);
         Task<IEnumerable<Address>> GetAddresses(int userId);

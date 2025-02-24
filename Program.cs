@@ -1,5 +1,7 @@
+using System.Data;
 using System.Text;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using ProjectJWTeCommerce;
@@ -18,6 +20,12 @@ builder.Services.AddSwaggerGen();
 builder.Services.AddDbContext<MyDBContext>(options => 
 options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 
+//This is bareMetal approach to connect to the database
+
+//builder.Services.AddScoped<IDbConnection>(sp => { 
+// return new SqlConnection(builder.Configuration.GetConnectionString("DefaultConnection"));
+//});
+
 // DI
 builder.Services.AddScoped<IUserRepository, UserService>();
 builder.Services.AddScoped<IProductRepository, ProductService>();
@@ -28,9 +36,10 @@ builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowAll", builder =>
     {
-        builder.AllowAnyOrigin()
+        builder.AllowAnyOrigin().WithOrigins("http://localhost:5173")
                .AllowAnyMethod()
-               .AllowAnyHeader();
+               .AllowAnyHeader()
+               .AllowCredentials();
     });
 });
 
@@ -65,6 +74,7 @@ if (app.Environment.IsDevelopment())
 app.UseHttpsRedirection();
 
 app.UseAuthorization();
+app.UseCors("AllowAll");
 
 app.MapControllers();
 
